@@ -104,4 +104,4 @@ func TestLogin(t *testing.T) {
 
 Then you can run this test to check the handler.
 
-You can find more tests and more specific information about how to use utils in the [gin_unit_test/handlers_test.go](https://github.com/Valiben/gin_unit_test/handlers_test.go).
+You can find more tests and more specific information about how to use utils in the [gin_unit_test/handlers_test.go](https://github.com/Valiben/gin_unit_test/blob/master/test/handlers_test.go).
