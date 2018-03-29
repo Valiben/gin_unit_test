@@ -41,7 +41,7 @@ func LoginHandler(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// judge the password and username
 	if req.UserName != "Valiben" || req.Password != "123456" {
 		c.JSON(http.StatusOK, gin.H{
@@ -50,7 +50,7 @@ func LoginHandler(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"errno":  "0",
 		"errmsg": "login success",

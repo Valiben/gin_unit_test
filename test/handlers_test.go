@@ -39,14 +39,24 @@ func init() {
 }
 
 func TestLoginHandler(t *testing.T) {
+
+	// 构造请求参数
+	requestParam := User{
+		UserName:user.UserName,
+		Password:user.Password,
+		Age:user.Age,
+	}
+	// 构造接收响应体的resp
 	resp := OrdinaryResponse{}
 
-	err := utils.TestHandlerUnMarshalResp(utils.POST, "/login", utils.Form, user, &resp)
+	// 发起请求测试对应handler，并将响应体解析到resp中
+	err := utils.TestHandlerUnMarshalResp(utils.POST, "/login", utils.Form, requestParam, &resp)
 	if err != nil {
 		t.Errorf("TestLoginHandler: %v\n", err)
 		return
 	}
 
+	// 判断响应是否符合预期
 	if resp.Errno != "0" {
 		t.Errorf("TestLoginHandler: response is not expected\n")
 		return
@@ -56,6 +66,7 @@ func TestLoginHandler(t *testing.T) {
 func TestAddUserHandler(t *testing.T) {
 	resp := OrdinaryResponse{}
 
+	// 请求参数直接传一个User结构体变量
 	err := utils.TestHandlerUnMarshalResp(utils.PUT, "/add/user", utils.Form, user, &resp)
 	if err != nil {
 		t.Errorf("TestAddUserHandler: %v\n", err)

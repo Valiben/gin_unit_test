@@ -15,11 +15,6 @@ type User struct {
 	Age      int    `form:"age" json:"age" binding:"required"`
 }
 
-type FileRequest struct {
-	FileName   string `json:"file_name" form:"file_name" binding:"required"`
-	UploadName string `json:"upload_name" form:"upload_name" binding:"required"`
-}
-
 func LoginHandler(c *gin.Context) {
 	req := &User{}
 	if err := c.Bind(req); err != nil {
@@ -78,6 +73,11 @@ func AddUserHandler(c *gin.Context) {
 		"errno":  "0",
 		"errmsg": fmt.Sprintf("add user:%+v", req),
 	})
+}
+
+type FileRequest struct {
+	FileName   string `json:"file_name" form:"file_name" binding:"required"`
+	UploadName string `json:"upload_name" form:"upload_name" binding:"required"`
 }
 
 func SaveFileHandler(c *gin.Context) {
