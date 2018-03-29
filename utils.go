@@ -1,124 +1,113 @@
 package gin_unit_test
 
 import (
-	"net/http/httptest"
-	"io/ioutil"
 	"bytes"
-	"github.com/gin-gonic/gin"
 	"encoding/json"
-	"net/http"
 	"fmt"
-	"os"
-	"mime/multipart"
+	"github.com/gin-gonic/gin"
 	"io"
+	"io/ioutil"
+	"log"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"reflect"
+	"strings"
 )
 
 var (
-	// method type
-	// 请求类型
-	POST = "POST"
-	GET = "GET"
-	PUT = "PUT"
-	DELETE = "DELETE"
-
-	// the way to send parameters
-	// 传参类型
-	Json = "json"
-	Form = "form"
-
 	// router
-	// 路由
 	router *gin.Engine
 
 	// customed request headers for token authorization and so on
-	// 自定义请求头，可用于token验证等
-	customedHeaders map[string]string
+	myHeaders = []CustomizedHeader{}
+
+	logging *log.Logger
 )
 
-// Param interface defines two function
-// Param接口定义了两个方法
-type Param interface {
-	// transform the request params to query string
-	// 将请求参数转化为query string
-	QueryStr() string
-
-	// transform the request params to json bytes
-	// 将请求参数转化为json bytes
-	JsonBytes() []byte
-}
-
-// example param struct
-// 示例param结构体
-type EgParam struct {
-	// contains request params
-	// 保存请求参数的map
-	Content map[string]interface{}
-}
-
-// set a param
-// 设置参数
-func (p *EgParam) Set(key string, value interface{}){
-	p.Content[key] = value
-}
-
-// get a param
-// 获取参数
-func (p *EgParam) Get(key string) interface{} {
-	return p.Content[key]
-}
-
-// implements the QueryStr function
-// 实现了QueryStr方法
-func (p *EgParam) QueryStr() string {
-	if p == nil {
-		return ""
-	}
-	values := ""
-	for key, val := range p.Content {
-		values += "&" + key + "=" + fmt.Sprintf("%v", val)
-	}
-	return values[1:]
-}
-
-// implements the JsonBytes function
-// 实现了JsonBytes方法
-func (p *EgParam) JsonBytes() []byte {
-	jsonBytes,_ := json.Marshal(p.Content)
-	return jsonBytes
-}
-
-// SetRouter
-// 设置路由
+// set the router
 func SetRouter(r *gin.Engine) {
 	router = r
 }
 
-// SetCustomedHeaders
-// 设置自定义请求头
-func SetCustomedHeaders(h map[string]string) {
-	customedHeaders = h
+// set the log
+func SetLog(l *log.Logger) {
+	logging = l
 }
 
-// simulate sending the request and accept the response, return the response body
-// 模拟发起请求，并接收响应，返回响应中的body
+// printf log
+func printfLog(format string, v ...interface{}) {
+	if logging == nil {
+		return
+	}
+
+	logging.Printf(format, v...)
+}
+
+// change the name to form filed name
+func changeToFieldName(name string) string {
+	result := ""
+	i := 0
+	j := 0
+	r := []rune(name)
+	for m, v := range r {
+		// if the char is the capital
+		if v >= 'A' && v < 'a' {
+			// if the prior is the lower-case || if the prior is the capital and the latter is the lower-case
+			if (m != 0 && r[m-1] >= 'a') || ((m != 0 && r[m-1] >= 'A' && r[m-1] < 'a') && (m != len(r)-1 && r[m+1] >= 'a')) {
+				i = j
+				j = m
+				result += name[i:j] + "_"
+			}
+		}
+	}
+
+	result += name[j:]
+	return strings.ToLower(result)
+}
+
+// change the params to the query string
+func getQueryStr(params interface{}) (result string, err error) {
+	if params == nil {
+		return
+	}
+	value := reflect.ValueOf(params)
+
+	switch value.Kind() {
+	case reflect.Struct:
+		for i := 0; i < value.NumField(); i++ {
+			result += "&" + changeToFieldName(value.Type().Field(i).Name) + "=" + fmt.Sprintf("%v", value.Field(i).Interface())
+		}
+	case reflect.Map:
+		for _, key := range value.MapKeys() {
+			result += "&" + fmt.Sprintf("%v", key.Interface()) + "=" + fmt.Sprintf("%v", value.MapIndex(key).Interface())
+		}
+	default:
+		err = ErrMustBeStructOrMap
+		return
+	}
+
+	if result != "" {
+		result = result[1:]
+	}
+	return
+}
+
+// sending the request and accept the response, return the response body
 func runHandler(req *http.Request) (bodyByte []byte, err error) {
 
 	// initialize response record
-	// 初始化response record
 	w := httptest.NewRecorder()
 
-	// simulate running the handler
-	// 模拟请求的发送，调用相应的handler处理请求
 	router.ServeHTTP(w, req)
 
 	// extract the response from the response record
-	// 从response record中提取response
 	result := w.Result()
 	defer result.Body.Close()
 
 	// extract response body
-	// 从response中提取response body
-	bodyByte,err = ioutil.ReadAll(result.Body)
+	bodyByte, err = ioutil.ReadAll(result.Body)
 
 	return
 }
@@ -128,46 +117,36 @@ func runHandler(req *http.Request) (bodyByte []byte, err error) {
 // the second parameter is the request uri
 // the third parameter is the name of the file, containing the directory of the file
 // the forth parameter is the field name of the file
-// 模拟文件的发送和响应的接收，并从响应中提取响应的body部分
-// 第一个参数是请求的方法，是POST，PUT中的一种
-// 第二个参数是请求地址
-// 第三个参数是文件名
-// 第四个参数是文件对应的字段名
-func SimulateFileHandler(method,uri,fileName string, filedName string) (bodyByte []byte, err error){
+func TestFileHandler(method, uri, fileName string, fieldName string, param interface{}) (bodyByte []byte, err error) {
 	// check whether the router is nil
-	// 检查router是否为空
 	if router == nil {
 		err = ErrRouterNotSet
 		return
 	}
 
 	// check whether the method is appropiate, now the method must should be POST or PUT
-	// 检查method是否合适，此时的method应该为POST或PUT中的一种
 	if method != POST && method != PUT {
 		err = ErrMustPostOrPut
 		return
 	}
 
 	// create form file
-	// 创建表单文件
 	buf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(buf)
 
-	fileWriter,err := bodyWriter.CreateFormFile(filedName, fileName)
+	fileWriter, err := bodyWriter.CreateFormFile(fieldName, fileName)
 	if err != nil {
 		return
 	}
 
 	// open the file
-	// 打开文件
-	file,err := os.Open(fileName)
+	file, err := os.Open(fileName)
 	if err != nil {
 		return
 	}
 
 	// copy the content of the file to the fileWriter
-	// 将文件的内容拷贝到fileWriter中，其实也就相当于拷贝到了之前的buf中了
-	length,err := io.Copy(fileWriter, file)
+	length, err := io.Copy(fileWriter, file)
 	if err != nil {
 		return
 	}
@@ -176,9 +155,20 @@ func SimulateFileHandler(method,uri,fileName string, filedName string) (bodyByte
 	bodyWriter.Close()
 
 	// make request
-	// 构造请求
-	req := httptest.NewRequest(method, uri, buf)
+	queryStr, err := getQueryStr(param)
+	if err != nil {
+		return
+	}
+
+	if queryStr != "" {
+		queryStr = "?" + queryStr
+	}
+
+	printfLog("TestFileHandler\tRequest:\t%v:%v%v \tFileName:%v, FieldName:%v\n", method, uri, queryStr, fileName, fieldName)
+
+	req := httptest.NewRequest(method, uri+queryStr, buf)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
+
 	err = req.ParseMultipartForm(length)
 
 	if err != nil {
@@ -187,18 +177,19 @@ func SimulateFileHandler(method,uri,fileName string, filedName string) (bodyByte
 
 	// check whether the customed headers are nil
 	// if not, then add them to current request headers
-	// 判断自定义请求头是否为空，如果不为空，则将他们添加到现有的请求头中
-	if customedHeaders != nil {
+	if myHeaders != nil {
 		// add the customed headers
-		// 添加自定义头信息
-		for key,value := range customedHeaders {
-			req.Header.Set(key, value)
+		for _, data := range myHeaders {
+			if data.IsValid {
+				req.Header.Set(data.Key, data.Value)
+			}
 		}
 	}
 
-	// simulate sending request
-	// 模拟发送请求
+	// sending request
 	bodyByte, err = runHandler(req)
+
+	printfLog("TestFileHandler\tResponse:\t%v:%v,\tResponse:%v\n", method, uri, string(bodyByte))
 	return
 }
 
@@ -207,52 +198,81 @@ func SimulateFileHandler(method,uri,fileName string, filedName string) (bodyByte
 // the second parameter is the request uri
 // the third parameter is the way to send parameter, expected form or json
 // the forth parameter is the parameter of the request, it must implement the Param interface
-// 模拟请求的发送和响应的接收，并从响应中提取响应的body部分
-// 第一个参数是请求的方法，是GET，POST，PUT，DELETE中的一种
-// 第二个参数是请求地址
-// 第三个参数是发送请求参数的方式，是json或form表单中的一种
-// 第四个参数是请求参数，必须实现了Param接口
-func SimulateOrdinaryHandler(method string, uri string, way string, param Param) (bodyByte []byte, err error){
+func TestOrdinaryHandler(method string, uri string, way string, param interface{}) (bodyByte []byte, err error) {
 	if router == nil {
 		err = ErrRouterNotSet
 		return
 	}
 
 	// make request
-	// 构造请求
 	var req *http.Request
 	switch way {
 	case Json:
 		// when the way is Json, change the variable to json bytes, and add to the request body
-		// 当传参方式为json时，将变量转化为json bytes，添加到请求体中
 		jsonBytes := []byte{}
 		if param != nil {
-			jsonBytes = param.JsonBytes()
+			jsonBytes, err = json.Marshal(param)
+			if err != nil {
+				return
+			}
 		}
 		req = httptest.NewRequest(method, uri, bytes.NewReader(jsonBytes))
+		req.Header.Set("Content-Type", "application/json")
+
+		printfLog("TestOrdinaryHandler\tRequest:\t%v:%v,\trequestBody:%v\n", method, uri, string(jsonBytes))
 	case Form:
 		// when the way is form, then change the variable to query string, and add to the latter of the request uri
-		// 当传参方式为form时，将变量转化为query string	，添加到请求uri之后
 		queryStr := ""
 		if param != nil {
-			queryStr = param.QueryStr()
+			queryStr, err = getQueryStr(param)
+			if err != nil {
+				return
+			}
 		}
-		req = httptest.NewRequest(method, uri+"?"+queryStr, nil)
+
+		if queryStr != "" {
+			queryStr = "?" + queryStr
+		}
+		req = httptest.NewRequest(method, uri+queryStr, nil)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		printfLog("TestOrdinaryHandler\tRequest:\t%v:%v%v\n", method, uri, queryStr)
 	}
 
 	// check whether the customed headers are nil
 	// if not, then add them to current request headers
-	// 判断自定义请求头是否为空，如果不为空，则将他们添加到现有的请求头中
-	if customedHeaders != nil {
+	if myHeaders != nil {
 		// add the customed headers
-		// 将自定义头添加到请求头中
-		for key,value := range customedHeaders {
-			req.Header.Set(key, value)
+		for _, data := range myHeaders {
+			if data.IsValid {
+				req.Header.Set(data.Key, data.Value)
+			}
 		}
 	}
 
 	// launch request
-	// 发起请求
 	bodyByte, err = runHandler(req)
+
+	printfLog("TestOrdinaryHandler\tResponse:\t%v:%v\tResponse:%v\n", method, uri, string(bodyByte))
 	return
+}
+
+// test the ordinary handler and unmarshal the response
+func TestHandlerUnMarshalResp(method string, uri string, way string, param interface{}, resp interface{}) error {
+	bodyByte, err := TestOrdinaryHandler(method, uri, way, param)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(bodyByte, resp)
+}
+
+// test the file handler and unmarshal the response
+func TestFileHandlerUnMarshalResp(method, uri, fileName string, filedName string, param interface{}, resp interface{}) error {
+	bodyByte, err := TestFileHandler(method, uri, fileName, filedName, param)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(bodyByte, resp)
 }

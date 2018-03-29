@@ -31,29 +31,29 @@ type User struct {
 }
 ```
 ```go
-func Login(c *gin.Context) {
+func LoginHandler(c *gin.Context) {
 	req := &User{}
-	if err := c.ShouldBindWith(req, binding.JSON); err != nil {
-		log.Printf("err:%v",err)
+	if err := c.Bind(req); err != nil {
+		log.Printf("err:%v", err)
 		c.JSON(http.StatusOK, gin.H{
-			"errno":"1",
-			"errmsg":"parameters not match",
+			"errno":  "1",
+			"errmsg": "parameters not match",
 		})
 		return
 	}
 	
-	if req.Username != "Valiben" || req.Password != "123456" {
+	// judge the password and username
+	if req.UserName != "Valiben" || req.Password != "123456" {
 		c.JSON(http.StatusOK, gin.H{
-			"errno":"2",
-			"errmsg":"password or username is wrong",
+			"errno":  "2",
+			"errmsg": "password or username is wrong",
 		})
 		return
 	}
 	
-
 	c.JSON(http.StatusOK, gin.H{
-		"errno":"0",
-		"errmsg":"login success",
+		"errno":  "0",
+		"errmsg": "login success",
 	})
 }
 ```
@@ -64,7 +64,7 @@ Firstly, you should set up the router to handle the requests.
 
 ```go
 router := gin.Default()
-router.POST("/login", Login)
+router.POST("/login", LoginHandler)
 ```
 Secondly, you should set the router of the utils so that you can use the utils to test the handler.
 
@@ -74,29 +74,17 @@ utils.SetRouter(router)
 Then you can write the unit test function.
 
 ```go
-func TestLogin(t *testing.T) {
-	egParam := &utils.EgParam{
-		make(map[string]interface{}),
-	}
-	
-	egParam.Set("username", user.Username)
-	egParam.Set("password", user.Password)
-	egParam.Set("age", user.Age)
-	
-	bodyByte,err := utils.SimulateOrdinaryHandler(utils.POST, "/login", utils.Json, egParam)
-	if err != nil {
-		t.Errorf("TestLogin: %v\n", err)
-		return
-	}
-	fmt.Printf("TestLogin: response: %v\n", string(bodyByte))
-	
+func TestLoginHandler(t *testing.T) {
 	resp := OrdinaryResponse{}
-	if err := json.Unmarshal(bodyByte, &resp); err != nil {
-		t.Errorf("TestLogin: %v\n", err)
+	
+	err := utils.TestHandlerUnMarshalResp(utils.POST, "/login", utils.Form, user, &resp)
+	if err != nil {
+		t.Errorf("TestLoginHandler: %v\n", err)
 		return
 	}
+	
 	if resp.Errno != "0" {
-		t.Errorf("TestLogin: response is not expected\n")
+		t.Errorf("TestLoginHandler: response is not expected\n")
 		return
 	}
 }
@@ -104,4 +92,4 @@ func TestLogin(t *testing.T) {
 
 Then you can run this test to check the handler.
 
-You can find more tests and more specific information about how to use utils in the [gin_unit_test/handlers_test.go](https://github.com/Valiben/gin_unit_test/blob/master/test/handlers_test.go).
+You can find more tests and more specific information about how to use utils in the [test/handlers_test.go](https://github.com/Valiben/gin_unit_test/blob/master/test/handlers_test.go).
