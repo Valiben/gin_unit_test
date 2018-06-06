@@ -117,6 +117,7 @@ func runHandler(req *http.Request) (bodyByte []byte, err error) {
 // the second parameter is the request uri
 // the third parameter is the name of the file, containing the directory of the file
 // the forth parameter is the field name of the file
+// the five parameter is other request params
 func TestFileHandler(method, uri, fileName string, fieldName string, param interface{}) (bodyByte []byte, err error) {
 	// check whether the router is nil
 	if router == nil {

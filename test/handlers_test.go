@@ -2,14 +2,11 @@ package test
 
 import (
 	"github.com/gin-gonic/gin"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"testing"
-	"time"
-	utils "zonst/qipai/gin-unittest-demo"
+	utils "github.com/Valiben/gin_unit_test"
 )
 
 func init() {
@@ -39,24 +36,20 @@ func init() {
 }
 
 func TestLoginHandler(t *testing.T) {
+	// make request params
+	param := make(map[string]interface{})
+	param["user_name"] = user.UserName
+	param["password"] = user.Password
+	param["age"] = user.Age
 
-	// 构造请求参数
-	requestParam := User{
-		UserName:user.UserName,
-		Password:user.Password,
-		Age:user.Age,
-	}
-	// 构造接收响应体的resp
 	resp := OrdinaryResponse{}
 
-	// 发起请求测试对应handler，并将响应体解析到resp中
-	err := utils.TestHandlerUnMarshalResp(utils.POST, "/login", utils.Form, requestParam, &resp)
+	err := utils.TestHandlerUnMarshalResp(utils.POST, "/login", utils.Form, param, &resp)
 	if err != nil {
 		t.Errorf("TestLoginHandler: %v\n", err)
 		return
 	}
 
-	// 判断响应是否符合预期
 	if resp.Errno != "0" {
 		t.Errorf("TestLoginHandler: response is not expected\n")
 		return
@@ -66,7 +59,6 @@ func TestLoginHandler(t *testing.T) {
 func TestAddUserHandler(t *testing.T) {
 	resp := OrdinaryResponse{}
 
-	// 请求参数直接传一个User结构体变量
 	err := utils.TestHandlerUnMarshalResp(utils.PUT, "/add/user", utils.Form, user, &resp)
 	if err != nil {
 		t.Errorf("TestAddUserHandler: %v\n", err)
@@ -94,35 +86,12 @@ func TestDeleteUserHandler(t *testing.T) {
 }
 
 func TestSaveFileHandler(t *testing.T) {
-
 	param := make(map[string]interface{})
 	param["file_name"] = "test1.txt"
 	param["upload_name"] = "Valiben"
 
-	// get and format the current time string as the content of the next file
-	now := time.Now().Format("2006-01-02 15:04:05")
-
-	// create a file
-	file, err := os.Create((param["file_name"]).(string))
-	if err != nil {
-		t.Errorf("TestSaveFileHandler: %v\n", err)
-		return
-	}
-
-	// use the previous formatted time to initialize a reader
-	reader := strings.NewReader(now)
-
-	// copy the content of the reader to the file
-	_, err = io.Copy(file, reader)
-	if err != nil {
-		t.Errorf("TestSaveFileHandler: %v\n", err)
-		return
-	}
-
-	defer file.Close()
-
 	resp := OrdinaryResponse{}
-	err = utils.TestFileHandlerUnMarshalResp(utils.POST, "/upload", (param["file_name"]).(string),
+	err := utils.TestFileHandlerUnMarshalResp(utils.POST, "/upload", (param["file_name"]).(string),
 		"file", param, &resp)
 	if err != nil {
 		t.Errorf("TestSaveFileHandler: %v\n", err)
