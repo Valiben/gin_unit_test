@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 	"time"
-	utils "zonst/qipai/gin-unittest-demo"
+	utils "github.com/Valiben/gin_unit_test"
 )
 
 func init() {
