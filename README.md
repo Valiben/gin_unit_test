@@ -69,7 +69,7 @@ router.POST("/login", LoginHandler)
 Secondly, you should set the router of the utils so that you can use the utils to test the handler.
 
 ```go
-utils.SetRouter(router)
+SetRouter(router)
 ```
 Then you can write the unit test function.
 
@@ -77,7 +77,7 @@ Then you can write the unit test function.
 func TestLoginHandler(t *testing.T) {
 	resp := OrdinaryResponse{}
 	
-	err := utils.TestHandlerUnMarshalResp(utils.POST, "/login", utils.Form, user, &resp)
+	err := utils.TestHandlerUnMarshalResp("POST", "/login", "form", user, &resp)
 	if err != nil {
 		t.Errorf("TestLoginHandler: %v\n", err)
 		return

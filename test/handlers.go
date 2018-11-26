@@ -21,7 +21,7 @@ func LoginHandler(c *gin.Context) {
 		log.Printf("err:%v", err)
 		c.JSON(http.StatusOK, gin.H{
 			"errno":  "1",
-			"errmsg": "parameters not match",
+			"errmsg": err.Error(),
 		})
 		return
 	}
@@ -47,7 +47,7 @@ func DeleteUserHandler(c *gin.Context) {
 		log.Printf("err:%v", err)
 		c.JSON(http.StatusOK, gin.H{
 			"errno":  "1",
-			"errmsg": "parameters not match",
+			"errmsg": err.Error(),
 		})
 		return
 	}
@@ -64,7 +64,7 @@ func AddUserHandler(c *gin.Context) {
 		log.Printf("err:%v", err)
 		c.JSON(http.StatusOK, gin.H{
 			"errno":  "1",
-			"errmsg": "parameters not match",
+			"errmsg": err.Error(),
 		})
 		return
 	}
@@ -88,7 +88,7 @@ func SaveFileHandler(c *gin.Context) {
 		log.Printf("err:%v", err)
 		c.JSON(http.StatusOK, gin.H{
 			"errno":  "1",
-			"errmsg": "parameters not match",
+			"errmsg": err.Error(),
 		})
 		return
 	}
@@ -103,7 +103,6 @@ func SaveFileHandler(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("SaveFile: req:%+v\n", req)
 	out, err := os.Create("test2.txt")
 
 	if err != nil {

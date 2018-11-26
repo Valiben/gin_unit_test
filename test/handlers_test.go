@@ -6,7 +6,8 @@ import (
 	"log"
 	"os"
 	"testing"
-	utils "github.com/Valiben/gin_unit_test"
+	unitTest "github.com/Valiben/gin_unit_test"
+	utils "github.com/Valiben/gin_unit_test/utils"
 )
 
 func init() {
@@ -26,13 +27,13 @@ func init() {
 	router.Use(Authorize())
 
 	// set the router
-	utils.SetRouter(router)
+	unitTest.SetRouter(router)
 
 	// set customized request headers
-	utils.AddHeader(tokenName, myToken, true)
+	unitTest.AddHeader(tokenName, myToken)
 
 	newLog := log.New(os.Stdout, "", log.Llongfile|log.Ldate|log.Ltime)
-	utils.SetLog(newLog)
+	unitTest.SetLog(newLog)
 }
 
 func TestLoginHandler(t *testing.T) {
@@ -44,7 +45,7 @@ func TestLoginHandler(t *testing.T) {
 
 	resp := OrdinaryResponse{}
 
-	err := utils.TestHandlerUnMarshalResp(utils.POST, "/login", utils.Form, param, &resp)
+	err := unitTest.TestHandlerUnMarshalResp("POST", "/login", "form", param, &resp)
 	if err != nil {
 		t.Errorf("TestLoginHandler: %v\n", err)
 		return
@@ -59,7 +60,7 @@ func TestLoginHandler(t *testing.T) {
 func TestAddUserHandler(t *testing.T) {
 	resp := OrdinaryResponse{}
 
-	err := utils.TestHandlerUnMarshalResp(utils.PUT, "/add/user", utils.Form, user, &resp)
+	err := unitTest.TestHandlerUnMarshalResp("PUT", "/add/user", "form", user, &resp)
 	if err != nil {
 		t.Errorf("TestAddUserHandler: %v\n", err)
 		return
@@ -72,7 +73,7 @@ func TestAddUserHandler(t *testing.T) {
 
 func TestDeleteUserHandler(t *testing.T) {
 	resp := OrdinaryResponse{}
-	err := utils.TestHandlerUnMarshalResp(utils.DELETE, "/delete/user", utils.Form, user, &resp)
+	err := unitTest.TestHandlerUnMarshalResp(utils.DELETE, "/delete/user", utils.FORM, user, &resp)
 
 	if err != nil {
 		t.Errorf("TestDeleteUserHandler: %v\n", err)
@@ -91,7 +92,7 @@ func TestSaveFileHandler(t *testing.T) {
 	param["upload_name"] = "Valiben"
 
 	resp := OrdinaryResponse{}
-	err := utils.TestFileHandlerUnMarshalResp(utils.POST, "/upload", (param["file_name"]).(string),
+	err := unitTest.TestFileHandlerUnMarshalResp(utils.POST, "/upload", (param["file_name"]).(string),
 		"file", param, &resp)
 	if err != nil {
 		t.Errorf("TestSaveFileHandler: %v\n", err)
@@ -105,7 +106,7 @@ func TestSaveFileHandler(t *testing.T) {
 }
 
 func TestGetFileHandler(t *testing.T) {
-	bodyByte, err := utils.TestOrdinaryHandler(utils.GET, "/file/test2.txt", utils.Form, nil)
+	bodyByte, err := unitTest.TestOrdinaryHandler(utils.GET, "/file/test2.txt", utils.FORM, nil)
 	if err != nil {
 		t.Errorf("TestGetFileHandler: %v\n", err)
 		return
