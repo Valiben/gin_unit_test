@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"github.com/Valiben/gin_unit_test/utils"
+	"zonst/qipai/gin-unittest-demo/utils"
 )
 
 var (
@@ -30,7 +30,7 @@ func SetLog(l *log.Logger) {
 }
 
 // add custom request header
-func AddHeader(key,value string) {
+func AddHeader(key, value string) {
 	myHeaders[key] = value
 }
 
@@ -68,11 +68,12 @@ func TestFileHandler(method, api, fileName string, fieldName string, param inter
 		return
 	}
 
+	_, paramStr := utils.MakeQueryStrFrom(param)
 	printfLog("TestFileHandler\tRequest:\t%v:%v?%v \tFileName:%v, FieldName:%v\n",
-		method, api, utils.MakeQueryStrFrom(param), fileName, fieldName)
+		method, api, paramStr, fileName, fieldName)
 
 	// make request
-	req,err := utils.MakeFileRequest(method, api, fileName, fieldName, param)
+	req, err := utils.MakeFileRequest(method, api, fileName, fieldName, param)
 	if err != nil {
 		return
 	}
@@ -96,7 +97,7 @@ func TestOrdinaryHandler(method string, api string, mime string, param interface
 	printfLog("TestOrdinaryHandler\tRequest:\t%v:%v,\trequestBody:%v\n", method, api, param)
 
 	// make request
-	req,err := utils.MakeRequest(method, mime, api, param)
+	req, err := utils.MakeRequest(method, mime, api, param)
 	if err != nil {
 		return
 	}

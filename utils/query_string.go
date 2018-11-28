@@ -1,12 +1,12 @@
 package utils
 
 import (
-	"reflect"
 	"fmt"
+	"reflect"
 )
 
 // make query string from params
-func MakeQueryStrFrom(params interface{}) (result string) {
+func MakeQueryStrFrom(params interface{}) (paramCount int, result string) {
 	if params == nil {
 		return
 	}
@@ -21,10 +21,12 @@ func MakeQueryStrFrom(params interface{}) (result string) {
 				formName = GetCamelNameFrom(value.Type().Field(i).Name)
 			}
 			result += "&" + formName + "=" + fmt.Sprintf("%v", value.Field(i).Interface())
+			paramCount++
 		}
 	case reflect.Map:
 		for _, key := range value.MapKeys() {
 			result += "&" + fmt.Sprintf("%v", key.Interface()) + "=" + fmt.Sprintf("%v", value.MapIndex(key).Interface())
+			paramCount++
 		}
 	default:
 		return
@@ -35,4 +37,3 @@ func MakeQueryStrFrom(params interface{}) (result string) {
 	}
 	return
 }
-

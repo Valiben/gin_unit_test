@@ -15,6 +15,67 @@ type User struct {
 	Age      int    `form:"age" json:"age" binding:"required"`
 }
 
+func GetAgeHandler(c *gin.Context) {
+	type UserNameAndPassword struct {
+		UserName string `json:"user_name" form:"user_name" binding:"required"`
+		Password string `form:"password" json:"password" binding:"required"`
+	}
+	req := &UserNameAndPassword{}
+	if err := c.Bind(req); err != nil {
+		log.Printf("err:%v", err)
+		c.JSON(http.StatusOK, gin.H{
+			"errno":  "1",
+			"errmsg": err.Error(),
+		})
+		return
+	}
+
+	// judge the password and username
+	if req.UserName != "Valiben" || req.Password != "123456" {
+		c.JSON(http.StatusOK, gin.H{
+			"errno":  "2",
+			"errmsg": "password or username is wrong",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"errno":  "0",
+		"errmsg": "",
+		"age":    18,
+	})
+}
+
+func GetPasswordHandler(c *gin.Context) {
+	type UserName struct {
+		UserName string `json:"user_name" form:"user_name" binding:"required"`
+	}
+	req := &UserName{}
+	if err := c.Bind(req); err != nil {
+		log.Printf("err:%v", err)
+		c.JSON(http.StatusOK, gin.H{
+			"errno":  "1",
+			"errmsg": err.Error(),
+		})
+		return
+	}
+
+	// judge the password and username
+	if req.UserName != "Valiben" {
+		c.JSON(http.StatusOK, gin.H{
+			"errno":  "2",
+			"errmsg": "username not exists",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"errno":  "0",
+		"errmsg": "",
+		"data":   "123456",
+	})
+}
+
 func LoginHandler(c *gin.Context) {
 	req := &User{}
 	if err := c.Bind(req); err != nil {

@@ -1,32 +1,33 @@
 package utils
 
 import (
-	"net/http"
 	"bytes"
 	"encoding/json"
 	"errors"
-	"mime/multipart"
-	"strings"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+	"strings"
 )
 
 const (
-	GET = "GET"
-	POST = "POST"
-	PUT = "PUT"
+	GET    = "GET"
+	POST   = "POST"
+	PUT    = "PUT"
 	DELETE = "DELETE"
 
 	JSON = "json"
 	FORM = "form"
 )
 
-var(
-	ErrMethodNotSupported     = errors.New("method is not supported")
-	ErrMIMENotSupported = errors.New("mime is not supported")
+var (
+	ErrMethodNotSupported = errors.New("method is not supported")
+	ErrMIMENotSupported   = errors.New("mime is not supported")
 )
 
 // make request which contains uploading file
-func MakeFileRequest(method, api, fileName,fieldName string, param interface{}) (request *http.Request, err error) {
+func MakeFileRequest(method, api, fileName, fieldName string, param interface{}) (request *http.Request, err error) {
 	method = strings.ToUpper(method)
 	if method != POST && method != PUT {
 		err = ErrMethodNotSupported
@@ -42,7 +43,7 @@ func MakeFileRequest(method, api, fileName,fieldName string, param interface{}) 
 	}
 
 	// read the file
-	fileBytes,err := ioutil.ReadFile(fileName)
+	fileBytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return
 	}
@@ -56,11 +57,11 @@ func MakeFileRequest(method, api, fileName,fieldName string, param interface{}) 
 	bodyWriter.Close()
 
 	// make request
-	queryStr := MakeQueryStrFrom(param)
+	_, queryStr := MakeQueryStrFrom(param)
 	if queryStr != "" {
-		api += "?"+queryStr
+		api += "?" + queryStr
 	}
-	request,err = http.NewRequest(string(method), api, buf)
+	request, err = http.NewRequest(string(method), api, buf)
 	if err != nil {
 		return
 	}
@@ -79,25 +80,31 @@ func MakeRequest(method, mime, api string, param interface{}) (request *http.Req
 	case JSON:
 		var (
 			contentBuffer *bytes.Buffer
-			jsonBytes []byte
+			jsonBytes     []byte
 		)
 		jsonBytes, err = json.Marshal(param)
 		if err != nil {
 			return
 		}
 		contentBuffer = bytes.NewBuffer(jsonBytes)
-		request,err = http.NewRequest(string(method), api, contentBuffer)
+		request, err = http.NewRequest(string(method), api, contentBuffer)
 		if err != nil {
 			return
 		}
 		request.Header.Set("Content-Type", "application/json;charset=utf-8")
 	case FORM:
-		queryStr := MakeQueryStrFrom(param)
-		buffer := bytes.NewReader([]byte(queryStr))
-		if ( method == DELETE || method == GET ) && queryStr != "" {
-			api += "?"+queryStr
+		count, queryStr := MakeQueryStrFrom(param)
+		var buffer io.Reader
+
+		// if 1<= params count <= 2, then add params to queryStr to upload the params
+		// else, add params to request body to upload the params
+		if (method == DELETE && queryStr != "") || (count <= 2 && count >= 1) {
+			api += "?" + queryStr
+		} else {
+			buffer = bytes.NewReader([]byte(queryStr))
 		}
-		request,err = http.NewRequest(string(method), api, buffer)
+
+		request, err = http.NewRequest(string(method), api, buffer)
 		if err != nil {
 			return
 		}

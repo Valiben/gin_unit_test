@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"testing"
-	unitTest "github.com/Valiben/gin_unit_test"
-	utils "github.com/Valiben/gin_unit_test/utils"
+	unitTest "zonst/qipai/gin-unittest-demo"
+	utils "zonst/qipai/gin-unittest-demo/utils"
 )
 
 func init() {
@@ -19,6 +19,8 @@ func init() {
 
 	// some handlers for post/put/delete requests
 	router.POST("/login", LoginHandler)
+	router.GET("/username/to/password", GetPasswordHandler)
+	router.GET("/get/age", GetAgeHandler)
 	router.PUT("/add/user", AddUserHandler)
 	router.DELETE("/delete/user", DeleteUserHandler)
 	router.POST("/upload", SaveFileHandler)
@@ -34,6 +36,45 @@ func init() {
 
 	newLog := log.New(os.Stdout, "", log.Llongfile|log.Ldate|log.Ltime)
 	unitTest.SetLog(newLog)
+}
+
+func TestGetAgeHandler(t *testing.T) {
+	// make request params
+	param := make(map[string]interface{})
+	param["user_name"] = user.UserName
+	param["password"] = user.Password
+
+	resp := OrdinaryResponse{}
+
+	err := unitTest.TestHandlerUnMarshalResp("GET", "/get/age", "form", param, &resp)
+	if err != nil {
+		t.Errorf("TestGetAgeHandler: %v\n", err)
+		return
+	}
+
+	if resp.Errno != "0" {
+		t.Errorf("TestGetAgeHandler: response is not expected\n")
+		return
+	}
+}
+
+func TestGetPasswordHandler(t *testing.T) {
+	// make request params
+	param := make(map[string]interface{})
+	param["user_name"] = user.UserName
+
+	resp := OrdinaryResponse{}
+
+	err := unitTest.TestHandlerUnMarshalResp("GET", "/username/to/password", "form", param, &resp)
+	if err != nil {
+		t.Errorf("TestGetPasswordHandler: %v\n", err)
+		return
+	}
+
+	if resp.Errno != "0" {
+		t.Errorf("TestGetPasswordHandler: response is not expected\n")
+		return
+	}
 }
 
 func TestLoginHandler(t *testing.T) {
