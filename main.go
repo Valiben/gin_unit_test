@@ -68,7 +68,7 @@ func TestFileHandler(method, api, fileName string, fieldName string, param inter
 		return
 	}
 
-	_, paramStr := utils.MakeQueryStrFrom(param)
+	paramStr := utils.MakeQueryStrFrom(param)
 	printfLog("TestFileHandler\tRequest:\t%v:%v?%v \tFileName:%v, FieldName:%v\n",
 		method, api, paramStr, fileName, fieldName)
 

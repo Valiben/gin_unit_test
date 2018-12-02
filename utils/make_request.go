@@ -57,7 +57,7 @@ func MakeFileRequest(method, api, fileName, fieldName string, param interface{})
 	bodyWriter.Close()
 
 	// make request
-	_, queryStr := MakeQueryStrFrom(param)
+	queryStr := MakeQueryStrFrom(param)
 	if queryStr != "" {
 		api += "?" + queryStr
 	}
@@ -93,12 +93,10 @@ func MakeRequest(method, mime, api string, param interface{}) (request *http.Req
 		}
 		request.Header.Set("Content-Type", "application/json;charset=utf-8")
 	case FORM:
-		count, queryStr := MakeQueryStrFrom(param)
+		queryStr := MakeQueryStrFrom(param)
 		var buffer io.Reader
 
-		// if 1<= params count <= 2, then add params to queryStr to upload the params
-		// else, add params to request body to upload the params
-		if (method == DELETE && queryStr != "") || (count <= 2 && count >= 1) {
+		if (method == DELETE || method == GET) && queryStr != "" {
 			api += "?" + queryStr
 		} else {
 			buffer = bytes.NewReader([]byte(queryStr))
