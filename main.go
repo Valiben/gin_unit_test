@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"zonst/qipai/gin-unittest-demo/utils"
+	"github.com/Valiben/gin_unit_test/utils"
 )
 
 var (

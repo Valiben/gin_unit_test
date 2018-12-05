@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"testing"
-	unitTest "zonst/qipai/gin-unittest-demo"
-	utils "zonst/qipai/gin-unittest-demo/utils"
+	unitTest "github.com/Valiben/gin_unit_test"
+	utils "github.com/Valiben/gin_unit_test/utils"
 )
 
 func init() {
