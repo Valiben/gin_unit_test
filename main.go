@@ -16,6 +16,9 @@ var (
 	// customed request headers for token authorization and so on
 	myHeaders = make(map[string]string, 0)
 
+	// customed request cookies
+	myCookie = &http.Cookie{}
+
 	logging *log.Logger
 )
 
@@ -32,6 +35,11 @@ func SetLog(l *log.Logger) {
 // add custom request header
 func AddHeader(key, value string) {
 	myHeaders[key] = value
+}
+
+// add custom cookies
+func AddCookie(cookie *http.Cookie) {
+	myCookie = cookie
 }
 
 // printf log
@@ -82,6 +90,9 @@ func TestFileHandler(method, api, fileName string, fieldName string, param inter
 		req.Header.Add(key, value)
 	}
 
+	// add customed cookies
+	req.AddCookie(myCookie)
+
 	// invoke handler
 	bodyByte, err = invokeHandler(req)
 	printfLog("TestFileHandler\tResponse:\t%v:%v,\tResponse:%v\n\n\n", method, api, string(bodyByte))
@@ -106,6 +117,9 @@ func TestOrdinaryHandler(method string, api string, mime string, param interface
 	for key, value := range myHeaders {
 		req.Header.Add(key, value)
 	}
+
+	// add customed cookies
+	req.AddCookie(myCookie)
 
 	// invoke handler
 	bodyByte, err = invokeHandler(req)
