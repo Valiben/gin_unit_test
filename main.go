@@ -2,6 +2,8 @@ package gin_unit_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -119,8 +121,12 @@ func TestHandlerUnMarshalResp(method string, uri string, way string, param inter
 	if err != nil {
 		return err
 	}
-
-	return json.Unmarshal(bodyByte, resp)
+	err = json.Unmarshal(bodyByte, resp)
+	if err != nil {
+		errorMsg := fmt.Sprintf("errmsg: %v, response body: %s", err, string(bodyByte))
+		return errors.New(errorMsg)
+	}
+	return err
 }
 
 func TestFileHandlerUnMarshalResp(method, uri, fileName string, filedName string, param interface{}, resp interface{}) error {
