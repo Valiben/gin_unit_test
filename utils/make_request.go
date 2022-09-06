@@ -98,6 +98,7 @@ func MakeRequest(method, mime, api string, param interface{}) (request *http.Req
 
 		if (method == DELETE || method == GET) && queryStr != "" {
 			api += "?" + queryStr
+			buffer = bytes.NewReader([]byte(queryStr))
 		} else {
 			buffer = bytes.NewReader([]byte(queryStr))
 		}
